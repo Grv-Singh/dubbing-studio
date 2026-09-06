@@ -1,0 +1,14 @@
+# Compiled Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary / Generated recordings & merges
+merged_*.mp4
+temp_*.wav
+/tmp/
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db
