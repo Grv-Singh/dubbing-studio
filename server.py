@@ -80,18 +80,18 @@ class DubForgeHandler(http.server.SimpleHTTPRequestHandler):
                 # Studio Broadcast Voice & Ducking Pipeline:
                 # 1. Voice: 80Hz highpass + 50Hz/100Hz hum reject + 3kHz presence boost
                 # 2. Intro mute: mic faded in right at dialogue start (5.8s) so intro BGM has zero mic noise/buzz
-                # 3. Vocal Level: dynaudnorm with wide window (g=31) ensures voice is loud, full and crystal clear
-                # 4. Ducking: BGM ducks automatically by -12dB when speaking, swells back in pauses
-                # 5. Output: amix normalize=0 + -1.0dB peak limiter for broadcast loudness
+                # 3. Vocal Amplitude Boost: dynaudnorm (m=12.0, p=0.96) + volume=1.6 delivers full, loud, punchy dialogue amplitude
+                # 4. Ducking: BGM at 0.38 ducks automatically by -12dB when speaking, swells back in pauses
+                # 5. Output: amix normalize=0 + -0.8dB peak limiter for maximum clarity and presence
                 filter_str = (
                     "[1:a]highpass=f=80,bandreject=f=50:w=6,bandreject=f=100:w=6,"
-                    "equalizer=f=3000:t=q:w=1.2:g=2.5,"
-                    "afade=t=in:st=5.8:d=0.4,"
-                    "dynaudnorm=f=120:g=31:m=3.0:p=0.90[voice];"
+                    "equalizer=f=3000:t=q:w=1.2:g=2.8,"
+                    "afade=t=in:st=5.8:d=0.3,"
+                    "dynaudnorm=f=150:g=25:m=12.0:p=0.96,volume=1.6[voice];"
                     "[voice]asplit=2[v_mix][v_sc];"
-                    "[0:a]volume=0.45,equalizer=f=1800:t=q:w=1.5:g=-3[bg_raw];"
-                    "[bg_raw][v_sc]sidechaincompress=threshold=0.03:ratio=5:attack=15:release=250[bg_ducked];"
-                    "[bg_ducked][v_mix]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-1.0dB[aout]"
+                    "[0:a]volume=0.38,equalizer=f=1800:t=q:w=1.5:g=-4[bg_raw];"
+                    "[bg_raw][v_sc]sidechaincompress=threshold=0.04:ratio=6:attack=15:release=250[bg_ducked];"
+                    "[bg_ducked][v_mix]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-0.8dB[aout]"
                 )
                 cmd = [
                     "ffmpeg", "-y",
@@ -109,12 +109,12 @@ class DubForgeHandler(http.server.SimpleHTTPRequestHandler):
             else:
                 filter_str = (
                     "[1:a]highpass=f=80,bandreject=f=50:w=6,bandreject=f=100:w=6,"
-                    "equalizer=f=3000:t=q:w=1.2:g=2.5,"
-                    "dynaudnorm=f=120:g=31:m=3.0:p=0.90[voice];"
+                    "equalizer=f=3000:t=q:w=1.2:g=2.8,"
+                    "dynaudnorm=f=150:g=25:m=12.0:p=0.96,volume=1.6[voice];"
                     "[voice]asplit=2[v_mix][v_sc];"
-                    "[0:a]equalizer=f=1200:t=q:w=1.5:g=-12,equalizer=f=2400:t=q:w=1.5:g=-12,stereotools=mlev=0.3:slev=1.3,volume=0.55[bg_raw];"
-                    "[bg_raw][v_sc]sidechaincompress=threshold=0.03:ratio=5:attack=15:release=250[bg_ducked];"
-                    "[bg_ducked][v_mix]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-1.0dB[aout]"
+                    "[0:a]equalizer=f=1200:t=q:w=1.5:g=-12,equalizer=f=2400:t=q:w=1.5:g=-12,stereotools=mlev=0.3:slev=1.3,volume=0.45[bg_raw];"
+                    "[bg_raw][v_sc]sidechaincompress=threshold=0.04:ratio=6:attack=15:release=250[bg_ducked];"
+                    "[bg_ducked][v_mix]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-0.8dB[aout]"
                 )
                 cmd = [
                     "ffmpeg", "-y",
