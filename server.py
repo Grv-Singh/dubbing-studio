@@ -77,12 +77,17 @@ class DubForgeHandler(http.server.SimpleHTTPRequestHandler):
             import subprocess
             clean_bg = os.path.join(APP_DIR, "vid_bg_clean.m4a")
             if os.path.exists(clean_bg) and "vid.mp4" in video_path.lower():
-                # Balanced Studio Mix:
-                # 1. Voice: High-pass (cleans low rumble) + 3kHz presence EQ + dynamic vocal leveling
-                # 2. BGM: Automatic sidechain ducking (-10dB) when speaking, swells smoothly in pauses
-                # 3. amix normalize=0 + peak limiter at -1.0dB for clear, broadcast-level balance
+                # Studio Broadcast Voice & Ducking Pipeline:
+                # 1. Voice: 85Hz highpass + 50Hz/100Hz hum reject + 3kHz presence boost
+                # 2. Gate: agate mutes mic noise floor during intro & pauses (kills all background buzz/hum)
+                # 3. Compression: acompressor provides musical, steady level (no pumping or choked words like 'seekh')
+                # 4. Ducking: BGM ducks automatically by -10dB when speaking, swells back in pauses
+                # 5. Output: amix normalize=0 + -1dB peak limiter for broadcast loudness
                 filter_str = (
-                    "[1:a]highpass=f=85,equalizer=f=3000:t=q:w=1.2:g=2.5,dynaudnorm=f=75:g=15:m=5.0:p=0.92[voice];"
+                    "[1:a]highpass=f=85,bandreject=f=50:w=8,bandreject=f=100:w=8,"
+                    "equalizer=f=3000:t=q:w=1.2:g=2.2,"
+                    "agate=threshold=0.012:ratio=3:range=0.01:attack=10:release=180,"
+                    "acompressor=threshold=-22dB:ratio=3:attack=10:release=120:makeup=2.2[voice];"
                     "[voice]asplit=2[v_mix][v_sc];"
                     "[0:a]volume=0.55,equalizer=f=1800:t=q:w=1.5:g=-4[bg_eq];"
                     "[bg_eq][v_sc]sidechaincompress=threshold=0.08:ratio=4:attack=20:release=250[bg_ducked];"
@@ -103,7 +108,10 @@ class DubForgeHandler(http.server.SimpleHTTPRequestHandler):
                 ]
             else:
                 filter_str = (
-                    "[1:a]highpass=f=85,equalizer=f=3000:t=q:w=1.2:g=2.5,dynaudnorm=f=75:g=15:m=5.0:p=0.92[voice];"
+                    "[1:a]highpass=f=85,bandreject=f=50:w=8,bandreject=f=100:w=8,"
+                    "equalizer=f=3000:t=q:w=1.2:g=2.2,"
+                    "agate=threshold=0.012:ratio=3:range=0.01:attack=10:release=180,"
+                    "acompressor=threshold=-22dB:ratio=3:attack=10:release=120:makeup=2.2[voice];"
                     "[voice]asplit=2[v_mix][v_sc];"
                     "[0:a]equalizer=f=1200:t=q:w=1.5:g=-12,equalizer=f=2400:t=q:w=1.5:g=-12,stereotools=mlev=0.3:slev=1.3[bg_eq];"
                     "[bg_eq][v_sc]sidechaincompress=threshold=0.08:ratio=4:attack=20:release=250[bg_ducked];"

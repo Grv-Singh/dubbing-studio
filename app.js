@@ -80,7 +80,19 @@ async function initAudio() {
     gateGain.gain.value = 1.0;
 
     // --- EQ config ---
-    highPassFilter.type = 'highpass'; highPassFilter.frequency.value = 50; // transparent sub-bass cut, preserves full vocal warmth
+    highPassFilter.type = 'highpass'; highPassFilter.frequency.value = 85; // clean 85Hz cutoff removes mic rumble & mains hum
+    
+    // Surgical notch filters for 50Hz & 100Hz AC electrical hum and ground buzz
+    const humFilter50 = ctx.createBiquadFilter();
+    humFilter50.type = 'notch';
+    humFilter50.frequency.value = 50;
+    humFilter50.Q.value = 6.0;
+
+    const humFilter100 = ctx.createBiquadFilter();
+    humFilter100.type = 'notch';
+    humFilter100.frequency.value = 100;
+    humFilter100.Q.value = 6.0;
+
     lowShelf.type = 'lowshelf';   lowShelf.frequency.value  = 120; // warm natural low end
     deEsserFilter.type = 'lowpass'; deEsserFilter.frequency.value = 20000; // completely open natural high-end
     midPeak.type  = 'peaking';    midPeak.frequency.value   = 2800; midPeak.Q.value = 0.8;
@@ -91,13 +103,15 @@ async function initAudio() {
     analyserNode.smoothingTimeConstant = 0.75;
 
     // --- chain ---
-    // mic -> gain -> highPass -> lowShelf -> deEsser -> compressor -> gateGain -> midPeak -> highShelf -> dry/wet reverb -> master
+    // mic -> gain -> highPass -> humFilter50 -> humFilter100 -> lowShelf -> deEsser -> compressor -> midPeak -> highShelf -> dry/wet reverb -> master
+    // Note: gateGain is bypassed from recording path so soft speech/consonants like 'seekh' are never swallowed!
     gainNode.connect(highPassFilter);
-    highPassFilter.connect(lowShelf);
+    highPassFilter.connect(humFilter50);
+    humFilter50.connect(humFilter100);
+    humFilter100.connect(lowShelf);
     lowShelf.connect(deEsserFilter);
     deEsserFilter.connect(compressorNode);
-    compressorNode.connect(gateGain);
-    gateGain.connect(midPeak);
+    compressorNode.connect(midPeak);
     midPeak.connect(highShelf);
 
     // analyser tapped before gate for true level detection and gate control
@@ -333,8 +347,8 @@ function startRecording() {
   recBuffers = [];
   recLength = 0;
 
-  // Set up ScriptProcessor to capture raw PCM from AudioContext output
-  recorderNode = ctx.createScriptProcessor(4096, 1, 1);
+  // Set up ScriptProcessor to capture raw PCM from AudioContext output (8192 samples provides ample headroom against UI hitches)
+  recorderNode = ctx.createScriptProcessor(8192, 1, 1);
   recorderNode.onaudioprocess = e => {
     if (!isRecording) return;
     const input = e.inputBuffer.getChannelData(0);
