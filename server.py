@@ -75,23 +75,25 @@ class DubForgeHandler(http.server.SimpleHTTPRequestHandler):
                 f.write(data)
 
             import subprocess
-            clean_bg = os.path.join(APP_DIR, "vid_bg_clean.m4a")
-            if os.path.exists(clean_bg) and "vid.mp4" in video_path.lower():
+            clean_bg = os.path.join(APP_DIR, f"{os.path.splitext(video_name)[0]}_bg_clean.m4a")
+            if not os.path.exists(clean_bg):
+                if "vid.mp4" in video_path.lower():
+                    clean_bg = os.path.join(APP_DIR, "vid_bg_clean.m4a")
+                elif "latest.mp4" in video_path.lower():
+                    clean_bg = os.path.join(APP_DIR, "latest_bg_clean.m4a")
+
+            if os.path.exists(clean_bg):
                 # Studio Broadcast Voice & Ducking Pipeline:
-                # 1. Voice: 80Hz highpass + 50Hz/100Hz hum reject + 3kHz presence boost
-                # 2. Intro mute: mic faded in right at dialogue start (5.8s) so intro BGM has zero mic noise/buzz
-                # 3. Vocal Amplitude Boost: dynaudnorm (m=12.0, p=0.96) + volume=1.6 delivers full, loud, punchy dialogue amplitude
-                # 4. Ducking: BGM at 0.38 ducks automatically by -12dB when speaking, swells back in pauses
-                # 5. Output: amix normalize=0 + -0.8dB peak limiter for maximum clarity and presence
+                fade_filter = "afade=t=in:st=5.8:d=0.3," if "vid.mp4" in video_path.lower() else "afade=t=in:st=0.2:d=0.2,"
                 filter_str = (
-                    "[1:a]highpass=f=80,bandreject=f=50:w=6,bandreject=f=100:w=6,"
-                    "equalizer=f=3000:t=q:w=1.2:g=2.8,"
-                    "afade=t=in:st=5.8:d=0.3,"
-                    "dynaudnorm=f=150:g=25:m=12.0:p=0.96,volume=1.6[voice];"
-                    "[voice]asplit=2[v_mix][v_sc];"
-                    "[0:a]volume=0.38,equalizer=f=1800:t=q:w=1.5:g=-4[bg_raw];"
-                    "[bg_raw][v_sc]sidechaincompress=threshold=0.04:ratio=6:attack=15:release=250[bg_ducked];"
-                    "[bg_ducked][v_mix]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-0.8dB[aout]"
+                    f"[1:a]highpass=f=80,bandreject=f=50:w=6,bandreject=f=100:w=6,"
+                    f"equalizer=f=3000:t=q:w=1.2:g=2.8,"
+                    f"{fade_filter}"
+                    f"dynaudnorm=f=150:g=25:m=12.0:p=0.96,volume=1.6[voice];"
+                    f"[voice]asplit=2[v_mix][v_sc];"
+                    f"[0:a]volume=0.38,equalizer=f=1800:t=q:w=1.5:g=-4[bg_raw];"
+                    f"[bg_raw][v_sc]sidechaincompress=threshold=0.04:ratio=6:attack=15:release=250[bg_ducked];"
+                    f"[bg_ducked][v_mix]amix=inputs=2:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-0.8dB[aout]"
                 )
                 cmd = [
                     "ffmpeg", "-y",
