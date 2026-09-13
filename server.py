@@ -82,7 +82,35 @@ class DubForgeHandler(http.server.SimpleHTTPRequestHandler):
                 elif "latest.mp4" in video_path.lower():
                     clean_bg = os.path.join(APP_DIR, "latest_bg_clean.m4a")
 
-            if os.path.exists(clean_bg):
+            if "latest.mp4" in video_path.lower() and os.path.exists(clean_bg):
+                # Johan Liebert Character Dub Pipeline:
+                # 00:00 - 23.4s: Schuwald's dialogue & original audio preserved
+                # 23.4s - 35.2s: Johan's dialogue muted, clean fire SFX added, user's Johan voice mixed
+                # 35.2s - 43.35s: Schuwald's dialogue & original audio preserved
+                filter_str = (
+                    "[1:a]highpass=f=80,bandreject=f=50:w=6,bandreject=f=100:w=6,"
+                    "equalizer=f=3000:t=q:w=1.2:g=2.8,"
+                    "afade=t=in:st=22.8:d=0.4,afade=t=out:st=35.2:d=0.3,"
+                    "dynaudnorm=f=150:g=25:m=12.0:p=0.96,volume=1.7[voice];"
+                    "[0:a]volume=enable='between(t,23.4,35.2)':volume=0.06:eval=frame[orig_ducked];"
+                    "[2:a]volume=enable='between(t,23.4,35.2)':volume=0.45:eval=frame,"
+                    "volume=enable='not(between(t,23.4,35.2))':volume=0:eval=frame[bg_ambient];"
+                    "[orig_ducked][bg_ambient][voice]amix=inputs=3:duration=first:dropout_transition=0:normalize=0,alimiter=limit=-0.8dB[aout]"
+                )
+                cmd = [
+                    "ffmpeg", "-y",
+                    "-i", video_path,
+                    "-i", audio_path,
+                    "-i", clean_bg,
+                    "-filter_complex", filter_str,
+                    "-map", "0:v:0",
+                    "-map", "[aout]",
+                    "-c:v", "copy",
+                    "-c:a", "aac",
+                    "-b:a", "192k",
+                    output_path
+                ]
+            elif os.path.exists(clean_bg):
                 # Studio Broadcast Voice & Ducking Pipeline:
                 fade_filter = "afade=t=in:st=5.8:d=0.3," if "vid.mp4" in video_path.lower() else "afade=t=in:st=0.2:d=0.2,"
                 filter_str = (

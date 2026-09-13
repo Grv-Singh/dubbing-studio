@@ -753,40 +753,29 @@ navigator.mediaDevices.getUserMedia({ audio: true })
   });
 
 // ── Default Script ────────────────────────
-const DEFAULT_SCRIPT = `🎬 DUBBING SCRIPT — Monster (Ep. 34: Library Fire)
+const DEFAULT_SCRIPT = `🎬 DUBBING SCRIPT — Monster: Johan Liebert Dub
 ════════════════════════════════
-Characters: Hans Georg Schuwald & Johan Liebert
 
-[00:01.0 - 00:08.5] [SLOW / DHEEMA]
-Schuwald: Aag ki laptein... har cheez ko nigalti jaa rahi hain... Aur tum yeh sab kitne ajeeb sukoon se bayan kar rahe ho...
-(Flames consuming everything they touch... you describe all of this with such damn calmness...)
+[00:00.0 - 00:23.5] [SLOW / DHEEMA]
+🎧 [Intro & Schuwald's Dialogue] — Original audio playing. Johan ka cue 23.5s par hai!
 
-[00:09.0 - 00:16.0] [SERIOUS / SUSPICIOUS]
-Schuwald: Laptein... Is jahannum jaise manzar ko mere sath baantne mein tumhe ek ajeeb sa maza aa raha hai, hai na?
-(Flames... you're getting quite a thrill out of sharing this hellish scene with me, aren't you?)
-
-[00:16.5 - 00:23.0] [MATURE / SHAKEN]
-Schuwald: Jab tum mere liye kitabein padhte the... tab bhi tumhari aawaaz aisi hi hoti thi. Aur ab... tum meri jaan lene waale ho...
-(That's how you always sounded when you read to me. And now... you're going to take my...)
-
-[00:24.0 - 00:30.0] [CHILLING / CALM]
-Johan: Mere zehen mein... isse bhi zyada dilchasp ek khayal aaya hai.
-(Something that's even more compelling has popped into my head.)
+[00:23.5 - 00:30.0] [CHILLING / CALM]
+🎭 JOHAN: Mere zehen mein... isse bhi zyada dilchasp ek khayal aaya hai.
+(English: Something that's even more compelling has popped into my head.)
 
 [00:30.5 - 00:35.0] [COLD / SOFT]
-Johan: Kya aapko abhi bhi darr nahi lag raha, Mr. Schuwald?
-(You're not afraid even now, Mr. Schuwald?)
+🎭 JOHAN: Kya aapko abhi bhi darr nahi lag raha, Mr. Schuwald?
+(English: You're not afraid even now, Mr. Schuwald?)
 
-[00:35.5 - 00:43.0] [TREMBLING / INTENSE]
-Schuwald: Mujhe bas ek jawab do... Tum kahan se aaye ho? Kaun ho tum... ya KYA ho tum?!
-(Answer me this... where did you come from? Who are you... or WHAT are you?!)
+[00:35.2 - 00:43.3] [SLOW / DHEEMA]
+🎧 [Schuwald's Outro] — Original audio playing: "Answer me this... where did you come from?"
 
 ════════════════════════════════
 TIPS:
-• 00:01s - Schuwald wheelchair par aag ko mehsus karta hai.
-• 00:24s - Johan speaks: Calm, cold, unhurried delivery.
-• 00:35s - Schuwald's final question: intense & trembling.
-• Line par tap karke video ko direct us dialogue par seek kar sakte hain!`;
+• 00:00 - 23.5s: Schuwald ka dialogue chalega (Original audio video me automatic mix rahegi).
+• 23.5s par Johan ka cue: Ekdum thandi, shaant aur bina darr wali aawaaz (Johan's whisper-calm tone).
+• 35.2s ke baad Schuwald wapas bolta hai (original preserved).
+• Video merge me sirf Johan ki aawaaz replace hogi, Schuwald ki aawaaz intact rahegi!`;
 
 document.getElementById('dubScript').value = DEFAULT_SCRIPT;
 
